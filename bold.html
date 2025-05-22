@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nordic UART BLE Example</title>
+</head>
+<body>
+<h1>BLE UART Demo</h1>
+<button id="connectBtn">Connect to Device</button>
+<button id="sendBtn">Send Hello</button>
+<pre id="output"></pre>
+
+<script type="module">
+    import { NordicUartBle } from './nordic-uart-bluetooth.js';
+    import { BoldCryptor } from './bold-cryptor.js';
+
+    const ble = new NordicUartBle();
+    const output = document.getElementById('output');
+
+    const handshakeKey = 'XvIQSoPedJh3MAr+Moxn7Q==';
+    const handshakePayload = 'uE3huE4uO/c+u6+uH6bRtJTMKQXXT3WNakZL5fn9rSS2Fvtx5Ld5BGum3yhLEZxvK3Er/AnYtif0JvMu8A==';
+    const commandPayload = '/1WoEH2k9MDpQRDfGtvKjf7HBH8j4dukRMhr4XTQC/1nJVHJQDRmfnPzfqVs2LFS22xr';
+
+    document.getElementById('connectBtn').addEventListener('click', async () => {
+        try {
+            output.textContent = 'Connecting...\n';
+            await ble.connect(event => { output.textContent += `Received event: ${event}\n`
+                output.textContent += 'Hex valued: ' + BoldCryptor.arrayBufferToHex(event.target.value) + '\n'
+            });
+            output.textContent += 'Connected to device.\n';
+        } catch (err) {
+            output.textContent += `Error: ${err.message}\n`;
+        }
+    });
+
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+        try {
+            const message = new Uint8Array(62);
+            message.set([0xa0], 0);
+            message.set(BoldCryptor.base64ToUint8Array(handshakePayload), 1);
+            output.textContent += 'Sending: ' + BoldCryptor.arrayBufferToHex(message) + '\n';
+            await ble.writeTX(new Uint8Array([0xa0]));
+
+            // const value = await ble.readRX();
+            // output.textContent += 'Received: ' + BoldCryptor.arrayBufferToHex(value.buffer) + '\n';
+        } catch (err) {
+            output.textContent += `Error: ${err.message}\n`;
+            console.error(`Error: ${err.message}`)
+        }
+    });
+</script>
+</body>
+</html>
